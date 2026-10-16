@@ -1,22 +1,56 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { SAMPLE_FEATURED_PRODUCTS, SAMPLE_CATEGORIES } from '@/data/sample-data';
-import { ProductCard } from '@/components/ui/ProductCard';
+import { getProducts, getCategories } from '@/lib/products';
+import { ProductsClient } from '@/components/catalog/ProductsClient';
 import { Container } from '@/components/ui/Container';
 
 export const metadata: Metadata = {
-  title: 'Products | NOVA MARKET',
-  description: 'Browse our full collection of timeless design objects and lifestyle essentials.',
+  title: 'Catalog & Essentials | NOVA MARKET',
+  description: 'Explore our complete collection of crafted objects, apparel, and workspace tools.',
 };
 
-export default function ProductsPage() {
+interface ProductsPageProps {
+  searchParams: Promise<{
+    category?: string;
+    sort?: 'featured' | 'price-asc' | 'price-desc' | 'newest' | 'rating';
+    search?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    page?: string;
+  }>;
+}
+
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const resolvedParams = await searchParams;
+
+  const minPrice = resolvedParams.minPrice ? parseFloat(resolvedParams.minPrice) : undefined;
+  const maxPrice = resolvedParams.maxPrice ? parseFloat(resolvedParams.maxPrice) : undefined;
+  const page = resolvedParams.page ? parseInt(resolvedParams.page, 10) : 1;
+
+  const [paginatedResult, categories] = await Promise.all([
+    getProducts({
+      category: resolvedParams.category,
+      sort: resolvedParams.sort,
+      search: resolvedParams.search,
+      minPrice,
+      maxPrice,
+      page,
+      limit: 6,
+    }),
+    getCategories(),
+  ]);
+
   return (
     <div className="py-12 sm:py-16">
       <Container>
         {/* Header */}
-        <div className="border-b border-zinc-200 pb-8 mb-10">
-          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-2">
-            Catalog • Development Sample Data
-          </p>
+        <div className="border-b border-zinc-200 pb-8 mb-8">
+          <div className="inline-flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+              Curated Catalog • Development Sample Inventory
+            </p>
+          </div>
           <h1 className="text-3xl sm:text-4xl font-serif font-medium text-zinc-900 tracking-tight">
             All Products
           </h1>
@@ -25,27 +59,22 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          <span className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-950 text-white cursor-pointer">
-            All Categories ({SAMPLE_FEATURED_PRODUCTS.length})
-          </span>
-          {SAMPLE_CATEGORIES.map((cat) => (
-            <span
-              key={cat.id}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors cursor-pointer"
-            >
-              {cat.name}
-            </span>
-          ))}
-        </div>
-
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {SAMPLE_FEATURED_PRODUCTS.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {/* Catalog Client with Suspense boundary */}
+        <Suspense
+          fallback={
+            <div className="py-20 text-center text-xs text-zinc-500">
+              Loading curated goods...
+            </div>
+          }
+        >
+          <ProductsClient
+            initialProducts={paginatedResult.products}
+            categories={categories}
+            total={paginatedResult.total}
+            page={paginatedResult.page}
+            totalPages={paginatedResult.totalPages}
+          />
+        </Suspense>
       </Container>
     </div>
   );

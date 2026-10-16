@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -14,6 +14,8 @@ import {
 import { Logo } from '@/components/layout/Logo';
 import { SearchBar } from '@/components/layout/SearchBar';
 import { Container } from '@/components/ui/Container';
+import { useCartStore } from '@/lib/cart-store';
+import { useWishlistStore } from '@/lib/wishlist-store';
 import { cn } from '@/lib/utils';
 
 const NAV_LINKS = [
@@ -28,6 +30,17 @@ export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  const { getItemCount, toggleCart } = useCartStore();
+  const { getItemCount: getWishlistCount } = useWishlistStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const cartCount = mounted ? getItemCount() : 0;
+  const wishlistCount = mounted ? getWishlistCount() : 0;
 
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-zinc-200 transition-colors">
@@ -113,25 +126,32 @@ export function Header() {
 
             {/* Wishlist Icon */}
             <Link
-              href="/products"
+              href="/wishlist"
               className="p-2 text-zinc-700 hover:text-zinc-950 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-950 relative"
-              aria-label="Wishlist (0 items)"
+              aria-label={`Wishlist (${wishlistCount} items)`}
             >
               <Heart className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-zinc-400 rounded-full" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-in zoom-in">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
 
-            {/* Cart Icon */}
-            <Link
-              href="/products"
-              className="p-2 text-zinc-700 hover:text-zinc-950 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-950 relative"
-              aria-label="Shopping Cart (0 items)"
+            {/* Cart Button with live drawer toggle */}
+            <button
+              type="button"
+              onClick={toggleCart}
+              className="p-2 text-zinc-700 hover:text-zinc-950 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-950 relative cursor-pointer"
+              aria-label={`Shopping Cart (${cartCount} items)`}
             >
               <ShoppingBag className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-zinc-900 text-white rounded-full text-[10px] font-bold flex items-center justify-center">
-                0
-              </span>
-            </Link>
+              {cartCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-zinc-950 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-in zoom-in">
+                  {cartCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
@@ -164,6 +184,22 @@ export function Header() {
               );
             })}
             <div className="pt-4 border-t border-zinc-200/60 mt-3 px-3 flex flex-col gap-2">
+              <Link
+                href="/cart"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-xs text-zinc-700 hover:text-zinc-950 font-medium flex items-center justify-between"
+              >
+                <span>Shopping Cart</span>
+                <span className="text-zinc-500">({cartCount})</span>
+              </Link>
+              <Link
+                href="/wishlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-xs text-zinc-700 hover:text-zinc-950 font-medium flex items-center justify-between"
+              >
+                <span>Wishlist</span>
+                <span className="text-zinc-500">({wishlistCount})</span>
+              </Link>
               <Link
                 href="/shipping-returns"
                 onClick={() => setMobileMenuOpen(false)}

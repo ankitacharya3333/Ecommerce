@@ -153,3 +153,137 @@ At the end, tell me:
 5. The recommended Git commit message.
 
 Do not begin Day 2. Wait for my next instruction.
+
+
+# DAY 2: E-COMMERCE CATALOG AND SHOPPING FEATURES
+
+Continue the existing NOVA MARKET project from Day 1.
+
+Act as a senior Next.js and React developer.
+
+## Mandatory instructions
+
+- Inspect the existing code before editing.
+- Preserve the design system, shared layout, and working navigation.
+- Do not rebuild the project from scratch.
+- Implement ONLY the features listed for Day 2.
+- Do not implement authentication, database migrations, payment processing, or the admin dashboard yet.
+- Do not proceed to Day 3 automatically.
+
+## Technology
+
+Use the existing Next.js App Router, TypeScript, Tailwind CSS, React, and Lucide React setup.
+
+Use the Motion for React library for small, purposeful interactions where useful.
+
+## Product catalog
+
+Create a reusable product data model with fields such as:
+
+- ID
+- Slug
+- Name
+- Description
+- Price
+- Optional sale price
+- Category
+- Images
+- Stock information
+- Optional rating and review count
+- Optional variants
+
+For this phase, use a clearly identified local development dataset or an existing working product API. Keep the data access layer structured so it can later be connected to Prisma and PostgreSQL.
+
+Do not claim that sample data is production inventory.
+
+## Product listing
+
+Implement `/products` with:
+
+- Responsive product cards
+- Product images
+- Product names and prices
+- Sale-price display where applicable
+- Category filtering
+- Price filtering
+- Sorting by price and newest where supported by the data
+- Search by product name
+- Pagination or a sensible small-catalog loading strategy
+- Empty results state
+- Loading and error states where applicable
+- Clear filters functionality
+
+Keep relevant search, sorting, and filter state in URL search parameters.
+
+## Product details
+
+Implement `/products/[slug]`.
+
+Include:
+
+- Product image gallery
+- Product description
+- Price
+- Stock status
+- Quantity selector
+- Add-to-cart button
+- Wishlist button
+- Product specifications
+- Related products
+
+Handle invalid product slugs with an appropriate not-found state.
+
+## Cart
+
+Implement a functional cart with:
+
+- Add to cart
+- Update quantity
+- Remove item
+- Clear cart
+- Subtotal calculation
+- Header cart count
+- Empty cart state
+- Cart drawer or cart page
+- Persistence across refreshes
+
+For now, a guest cart can use browser storage. Create a clean abstraction so authenticated database carts can be added later.
+
+Do not trust browser-stored prices for future checkout calculations.
+
+## Wishlist
+
+Implement add/remove wishlist functionality and a wishlist page.
+
+Use local development persistence for now and keep the implementation easy to replace with database-backed storage later.
+
+## User experience
+
+- Display useful feedback after adding an item.
+- Prevent invalid quantities.
+- Disable relevant controls while actions are processing.
+- Maintain consistent styling.
+- Ensure all buttons work.
+- Avoid excessive animations.
+- Keep mobile shopping usable.
+
+## Day 2 testing
+
+Verify:
+
+1. Product cards render correctly.
+2. Search and filters work together.
+3. Product details load for valid slugs.
+4. Invalid slugs display a not-found state.
+5. Add-to-cart updates the header count.
+6. Quantity updates change the subtotal.
+7. Removing items works.
+8. Cart persists across refreshes.
+9. Wishlist add/remove works.
+10. Internal navigation still works without full-page reloads.
+
+Fix errors before finishing.
+
+Report the changed files, test results, known limitations, and recommended Git commit message.
+
+Stop after Day 2. Do not implement Day 3 features.
