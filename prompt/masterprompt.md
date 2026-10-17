@@ -287,3 +287,179 @@ Fix errors before finishing.
 Report the changed files, test results, known limitations, and recommended Git commit message.
 
 Stop after Day 2. Do not implement Day 3 features.
+
+
+
+# DAY 3: DATABASE, AUTHENTICATION, VALIDATED FORMS, AND EMAIL
+
+Continue the existing NOVA MARKET project.
+
+Act as a senior full-stack engineer and security-conscious backend developer.
+
+## Mandatory workflow
+
+Inspect the current project and preserve existing features. Implement only Day 3.
+
+Do not rebuild the frontend. Do not implement the complete payment and checkout system or full admin dashboard in this phase.
+
+## Technology
+
+Use:
+
+- Next.js App Router
+- TypeScript
+- PostgreSQL
+- Prisma ORM
+- React Hook Form
+- Zod
+- `@hookform/resolvers`
+- Auth.js or a compatible secure authentication solution
+- Resend for server-side transactional email
+- React Email where appropriate
+
+Select compatible versions and use the correct APIs for those versions.
+
+## Database
+
+Configure Prisma and PostgreSQL.
+
+Create an appropriate schema for:
+
+- User
+- Authentication-related models required by the chosen adapter
+- Product
+- Category
+- Address
+- Cart
+- CartItem
+- WishlistItem
+- Inquiry
+- NewsletterSubscriber
+
+Prepare the structure for future order and payment models without implementing the complete checkout flow.
+
+Include appropriate relations, indexes, unique constraints, timestamps, and deletion rules.
+
+Provide migrations and a development seed script.
+
+Keep product prices and stock in the database once database-backed product integration is ready.
+
+## Authentication
+
+Implement a real authentication flow:
+
+- Registration
+- Login
+- Logout
+- Session handling
+- Protected customer account page
+- Profile page
+- Forgot-password flow
+- Secure password reset
+- Email verification if supported by the selected setup
+- Server-side authorization
+
+Use secure password hashing for credentials-based authentication.
+
+Never store plaintext passwords or send passwords through email.
+
+Do not create fake login success messages or hardcoded authentication.
+
+If required credentials or configuration are missing, identify them clearly.
+
+## React Hook Form and Zod
+
+Use React Hook Form and Zod for:
+
+- Registration
+- Login
+- Password recovery
+- Contact form
+- Newsletter form
+- Profile editing
+
+Create reusable schemas where appropriate.
+
+Validate on both client and server. Display accessible, field-specific error messages.
+
+## Contact and inquiry system
+
+Administrator notification address:
+
+rmnrr333@gmail.com
+
+Create a contact form containing:
+
+- Name
+- Email
+- Subject
+- Inquiry category
+- Message
+- Optional order number
+
+On submission:
+
+1. Validate the request on the server.
+2. Apply rate limiting and abuse protection.
+3. Save the inquiry to PostgreSQL.
+4. Attempt to send an administrator notification to `rmnrr333@gmail.com`.
+5. Send a customer confirmation email when appropriate.
+6. Show an honest result to the user.
+7. Record email delivery failures and provide a way to retry failed notifications.
+
+An inquiry being saved successfully must not be confused with email delivery succeeding.
+
+## Email configuration
+
+Use Resend or an appropriate transactional email service.
+
+Create `.env.example` with the required variable names, including:
+
+DATABASE_URL=
+AUTH_SECRET=
+RESEND_API_KEY=
+ADMIN_EMAIL=rmnrr333@gmail.com
+EMAIL_FROM=
+NEXT_PUBLIC_APP_URL=
+
+Include other required variables for the selected configuration.
+
+Never put private API keys in client-side code or `NEXT_PUBLIC_` variables.
+
+Use a verified sender domain and explain the required configuration.
+
+Do not claim that real emails are delivered until the provider is configured and delivery is tested.
+
+## Newsletter
+
+Implement a functional newsletter subscription endpoint.
+
+Validate addresses, avoid duplicate subscriptions, and provide confirmation feedback. Use a consent-aware subscription flow.
+
+## Security
+
+- Protect account routes.
+- Enforce resource ownership.
+- Rate-limit sensitive endpoints.
+- Avoid exposing database errors.
+- Validate all untrusted input on the server.
+- Keep secrets out of Git.
+- Use appropriate secure cookies and session configuration.
+
+## Preserve previous work
+
+Connect the existing product catalog to the database where feasible, without breaking the UI.
+
+Replace local cart persistence with database-backed persistence for authenticated customers if this can be completed safely in this phase. Retain guest cart functionality.
+
+Do not remove working features simply to simplify the implementation.
+
+## Day 3 verification
+
+Test registration, login, logout, authorization, form validation, database persistence, contact submissions, and email failure handling.
+
+Run migrations and tests using a development database.
+
+Provide exact commands and report what has actually been tested.
+
+Stop after Day 3. Do not implement Day 4 automatically.

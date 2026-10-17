@@ -117,9 +117,9 @@ export function Header() {
 
             {/* Account Icon */}
             <Link
-              href="/about"
+              href="/account"
               className="p-2 text-zinc-700 hover:text-zinc-950 rounded-full hover:bg-zinc-100 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-950"
-              aria-label="Account"
+              aria-label="Customer Account"
             >
               <User className="w-5 h-5" />
             </Link>
