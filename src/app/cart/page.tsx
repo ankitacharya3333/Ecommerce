@@ -189,15 +189,16 @@ export default function CartPage() {
                 Cart calculation and client-side persistence are fully functional. Checkout logic & payments will be connected in future development days.
               </div>
 
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={() => alert('Checkout logic is scheduled for upcoming development sessions.')}
-              >
-                <span>Proceed to Checkout</span>
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <Link href="/checkout" className="block w-full">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                >
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
 
               <div className="flex items-center justify-center gap-2 text-xs text-zinc-500 pt-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />

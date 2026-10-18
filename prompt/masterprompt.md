@@ -463,3 +463,158 @@ Run migrations and tests using a development database.
 Provide exact commands and report what has actually been tested.
 
 Stop after Day 3. Do not implement Day 4 automatically.
+
+
+
+
+# DAY 4: CHECKOUT, ORDER PROCESSING, PAYMENTS, AND ADMINISTRATION
+
+Continue the existing NOVA MARKET project. Preserve the code and architecture from Days 1–3.
+
+Act as a senior e-commerce backend engineer.
+
+Implement ONLY the Day 4 functionality.
+
+## 1. Database models
+
+Extend the existing Prisma schema with appropriate models for:
+
+- Order
+- OrderItem
+- Payment
+- Coupon
+- Inventory movement or audit history where appropriate
+
+Use transactions, relationships, constraints, and indexes.
+
+Preserve order item prices and product information at the time of purchase.
+
+Do not create duplicate models if equivalent models already exist.
+
+## 2. Checkout
+
+Implement a complete checkout experience:
+
+- Contact details
+- Shipping address
+- Delivery option
+- Order review
+- Coupon application
+- Payment method
+- Order confirmation
+
+Use React Hook Form and Zod.
+
+Calculate prices, discounts, shipping, and totals on the server.
+
+Revalidate inventory and product prices before creating an order.
+
+Prevent duplicate order submissions.
+
+## 3. Payments
+
+Integrate a suitable payment provider using its current official APIs.
+
+Design the payment layer so another provider can be added without rewriting the checkout.
+
+Use Stripe test mode where supported. For Nepal-focused commerce, evaluate eSewa or Khalti based on current merchant requirements and API documentation.
+
+Never claim a provider works in a region unless its availability and integration requirements have been verified.
+
+Requirements:
+
+- Secure checkout session or payment initiation
+- Server-side payment verification
+- Signed webhook verification
+- Idempotent webhook processing
+- Correct order payment status
+- Payment failure and retry handling
+- Cancellation handling
+- Refund handling where supported
+
+Never mark an order as paid based solely on a browser redirect.
+
+Never store raw card details.
+
+If API credentials are unavailable, implement the integration boundary and document exactly what remains unconfigured. Do not fake successful payments.
+
+## 4. Inventory
+
+Implement server-side inventory validation.
+
+Prevent stock from becoming negative. Use transactions or appropriate concurrency controls for inventory updates.
+
+Record relevant inventory changes and handle canceled orders appropriately.
+
+## 5. Customer order pages
+
+Implement:
+
+- `/account/orders`
+- `/account/orders/[id]`
+- `/track-order`
+
+Enforce customer ownership and avoid exposing another customer's order details.
+
+Show appropriate order statuses, totals, shipping information, and payment status.
+
+## 6. Admin dashboard
+
+Create a protected administrative interface with:
+
+- Dashboard overview
+- Product management
+- Category management
+- Inventory management
+- Order management
+- Customer management
+- Coupon management
+- Inquiry management
+
+Use real database queries rather than hardcoded dashboard metrics.
+
+Implement create, edit, and appropriate status-update operations.
+
+Enforce role-based authorization on the server for every administrative action.
+
+Do not rely on hiding admin links in the UI.
+
+## 7. Notifications
+
+Send configured emails for relevant events, such as:
+
+- Order confirmation
+- Verified payment confirmation
+- Order status updates
+- Shipping updates
+- Cancellation and refund events
+
+Notify `rmnrr333@gmail.com` about relevant new business events where appropriate.
+
+Do not send misleading payment confirmation emails before verification.
+
+Record and handle email failures.
+
+## 8. Testing
+
+Test:
+
+- Invalid checkout input
+- Stock changes during checkout
+- Duplicate submissions
+- Correct order totals
+- Unauthorized order access
+- Unauthorized admin access
+- Payment failure
+- Invalid webhook signatures
+- Duplicate webhook events
+- Order status transitions
+- Inventory changes
+
+Use test credentials and a development database.
+
+Do not claim a payment integration or test passed unless actually verified.
+
+Report changed files, required environment variables, remaining limitations, and the recommended Git commit message.
+
+Stop after Day 4. Do not begin Day 5.

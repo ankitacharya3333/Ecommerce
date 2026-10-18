@@ -204,14 +204,17 @@ export function CartDrawer() {
               </div>
 
               <div className="space-y-2">
+                <Link href="/checkout" onClick={closeCart} className="block w-full">
+                  <Button variant="primary" size="md" className="w-full">
+                    <span>Proceed to Checkout</span>
+                    <ArrowRight className="w-4 h-4 ml-1.5" />
+                  </Button>
+                </Link>
                 <Link href="/cart" onClick={closeCart} className="block w-full">
-                  <Button variant="outline" size="md" className="w-full">
+                  <Button variant="outline" size="sm" className="w-full">
                     View Full Cart Page
                   </Button>
                 </Link>
-                <div className="p-2.5 rounded-lg bg-zinc-200/60 text-center text-xs text-zinc-600">
-                  Checkout workflow is reserved for upcoming Day 3 phase.
-                </div>
               </div>
 
               <div className="text-center">

@@ -26,6 +26,41 @@ enum NotificationStatus {
   FAILED
 }
 
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+  ESEWA
+  KHALTI
+  MANUAL_BANK_TRANSFER
+}
+
+enum InventoryChangeType {
+  PURCHASE
+  CANCELLATION_RESTOCK
+  MANUAL_ADJUSTMENT
+  RETURN_RESTOCK
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -43,8 +78,8 @@ model User {
   cart          Cart?
   wishlistItems WishlistItem[]
   inquiries     Inquiry[]
+  orders        Order[]
 
-  // Password reset tokens relation
   passwordResetTokens PasswordResetToken[]
 
   @@index([email])
@@ -161,8 +196,10 @@ model Product {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  cartItems     CartItem[]
-  wishlistItems WishlistItem[]
+  cartItems        CartItem[]
+  wishlistItems    WishlistItem[]
+  orderItems       OrderItem[]
+  inventoryLogs    InventoryAuditLog[]
 
   @@index([categoryId])
   @@index([slug])
@@ -207,6 +244,134 @@ model WishlistItem {
   @@unique([userId, productId])
   @@index([userId])
   @@index([productId])
+}
+
+model Order {
+  id              String         @id @default(cuid())
+  orderNumber     String         @unique // e.g. NVA-2026-XXXXX
+  userId          String?
+  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestEmail      String?
+  status          OrderStatus    @default(PENDING)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  
+  // Pricing breakdown snapshotted at purchase time
+  subtotal        Decimal        @db.Decimal(10, 2)
+  discountTotal   Decimal        @default(0.00) @db.Decimal(10, 2)
+  shippingCost    Decimal        @default(0.00) @db.Decimal(10, 2)
+  taxCost         Decimal        @default(0.00) @db.Decimal(10, 2)
+  total           Decimal        @db.Decimal(10, 2)
+
+  // Applied Coupon snapshot
+  couponId        String?
+  couponCode      String?
+
+  // Shipping Address snapshot
+  shippingName    String
+  shippingAddress1 String
+  shippingAddress2 String?
+  shippingCity    String
+  shippingState   String
+  shippingZip     String
+  shippingCountry String         @default("United States")
+  shippingPhone   String?
+  deliveryOption  String         @default("Standard Tracked (3-5 days)")
+  trackingNumber  String?
+
+  // Concurrency and idempotency protection
+  idempotencyKey  String?        @unique
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  items           OrderItem[]
+  payments        Payment[]
+  inventoryLogs   InventoryAuditLog[]
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([guestEmail])
+}
+
+model OrderItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String?
+  product          Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  
+  // Snapshotted details to preserve history even if product changes or is deleted
+  name             String
+  sku              String
+  price            Decimal  @db.Decimal(10, 2)
+  quantity         Int
+  selectedVariants Json?    // Record<string, string>
+  image            String?
+
+  createdAt        DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id              String          @id @default(cuid())
+  orderId         String
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider        PaymentProvider
+  status          PaymentStatus   @default(PENDING)
+  amount          Decimal         @db.Decimal(10, 2)
+  currency        String          @default("USD")
+  
+  // Provider identifiers
+  transactionId   String?         // Stripe payment intent id, eSewa refId, Khalti pidx
+  sessionId       String?         // Stripe checkout session id
+  signature       String?         // HMAC signature for verified webhooks
+  rawResponse     Json?           // Full payload for audit log
+
+  errorMessage    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([orderId])
+  @@index([transactionId])
+  @@index([sessionId])
+}
+
+model Coupon {
+  id             String      @id @default(cuid())
+  code           String      @unique // e.g. "WELCOME10", "NOVA25"
+  type           CouponType  @default(PERCENTAGE)
+  value          Decimal     @db.Decimal(10, 2) // 10 (for 10%) or 25.00 ($25 off)
+  minSpend       Decimal?    @db.Decimal(10, 2)
+  maxDiscount    Decimal?    @db.Decimal(10, 2)
+  usageLimit     Int?
+  usageCount     Int         @default(0)
+  active         Boolean     @default(true)
+  expiresAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([code])
+}
+
+model InventoryAuditLog {
+  id          String              @id @default(cuid())
+  productId   String
+  product     Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type        InventoryChangeType
+  quantity    Int                 // Negative for purchases, positive for restocks
+  newStock    Int                 // Stock snapshot after change
+  reason      String
+  createdAt   DateTime            @default(now())
+
+  @@index([productId])
+  @@index([orderId])
 }
 
 model Inquiry {
