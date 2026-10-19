@@ -42,6 +42,14 @@ export async function POST(request: Request) {
 
     // Check for authenticated customer session
     const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        {
+          error: 'You must be logged in to place an order.'
+        },
+        { status: 401 }
+      );
+    }
 
     // 1. Idempotency Check: Prevent duplicate order processing for identical checkout action
     try {
@@ -231,7 +239,16 @@ export async function POST(request: Request) {
       createdOrderId = order.id;
       dbSuccess = true;
     } catch (dbErr: any) {
-      console.warn('PostgreSQL order transaction deferred (database offline or unprovisioned):', dbErr.message);
+      console.error('ORDER CREATION FAILED');
+      console.error(dbErr);
+
+      return NextResponse.json(
+        {
+          error: 'Order creation failed',
+          details: dbErr.message,
+        },
+        { status: 500 }
+      );
     }
 
     // 7. Initiate Payment Provider Boundary

@@ -11,13 +11,15 @@ export default async function AdminOrdersPage() {
   await requireAdmin();
 
   let orders: any[] = [];
+
   try {
     orders = await prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       include: { items: true, payments: true },
     });
-  } catch {
-    // Database offline
+  } catch (error) {
+    console.error('Admin orders fetch failed:', error);
+    throw error;
   }
 
   return (
@@ -74,9 +76,8 @@ export default async function AdminOrdersPage() {
                         </span>
                       </td>
                       <td className="p-4">
-                        <span className={`text-[11px] font-medium ${
-                          o.paymentStatus === 'PAID' ? 'text-emerald-700 font-semibold' : 'text-amber-700'
-                        }`}>
+                        <span className={`text-[11px] font-medium ${o.paymentStatus === 'PAID' ? 'text-emerald-700 font-semibold' : 'text-amber-700'
+                          }`}>
                           {o.paymentStatus}
                         </span>
                       </td>

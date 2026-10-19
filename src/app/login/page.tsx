@@ -36,13 +36,29 @@ export default function LoginPage() {
       });
 
       const json = await res.json();
+      console.log('Login response:', json);
       if (!res.ok) {
         setServerError(json.error || 'Authentication failed. Please verify credentials.');
         return;
       }
 
-      router.push('/account');
+      if (json.user?.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/account');
+      }
+
       router.refresh();
+
+
+      if (json.user?.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/account');
+      }
+
+      router.refresh();
+
     } catch {
       setServerError('Network error communicating with authentication service.');
     }
@@ -82,9 +98,8 @@ export default function LoginPage() {
                 autoComplete="email"
                 {...register('email')}
                 placeholder="client@novamarket.design"
-                className={`w-full px-3.5 py-2 text-sm rounded-lg border ${
-                  errors.email ? 'border-rose-400 bg-rose-50/20' : 'border-zinc-300'
-                } focus:outline-none focus:ring-2 focus:ring-zinc-950`}
+                className={`w-full px-3.5 py-2 text-sm rounded-lg border ${errors.email ? 'border-rose-400 bg-rose-50/20' : 'border-zinc-300'
+                  } focus:outline-none focus:ring-2 focus:ring-zinc-950`}
               />
               {errors.email && (
                 <p className="text-xs text-rose-600 mt-1">{errors.email.message}</p>
@@ -109,9 +124,8 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 {...register('password')}
                 placeholder="••••••••"
-                className={`w-full px-3.5 py-2 text-sm rounded-lg border ${
-                  errors.password ? 'border-rose-400 bg-rose-50/20' : 'border-zinc-300'
-                } focus:outline-none focus:ring-2 focus:ring-zinc-950`}
+                className={`w-full px-3.5 py-2 text-sm rounded-lg border ${errors.password ? 'border-rose-400 bg-rose-50/20' : 'border-zinc-300'
+                  } focus:outline-none focus:ring-2 focus:ring-zinc-950`}
               />
               {errors.password && (
                 <p className="text-xs text-rose-600 mt-1">{errors.password.message}</p>
