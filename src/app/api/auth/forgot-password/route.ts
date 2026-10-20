@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 import { forgotPasswordSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'local';
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
     const rate = checkRateLimit(`forgot-pass-${ip}`, 3, 300);
+
     if (!rate.success) {
       return NextResponse.json(
-        { error: `Too many requests. Please try again in ${rate.resetInSeconds} seconds.` },
+        {
+          error: `Too many requests. Please try again in ${rate.resetInSeconds} seconds.`,
+        },
         { status: 429 }
       );
     }
@@ -25,31 +29,49 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email } = result.data;
+    const email = result.data.email.trim().toLowerCase();
 
-    let user;
-    try {
-      user = await prisma.user.findUnique({ where: { email } });
-    } catch {
-      // In case database is temporarily offline
+    const apiKey = process.env.RESEND_API_KEY;
+    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+    // Require email configuration in every environment.
+    if (!apiKey || !fromEmail || !appUrl) {
+      console.error('[FORGOT PASSWORD] Missing email configuration:', {
+        hasApiKey: Boolean(apiKey),
+        hasFromEmail: Boolean(fromEmail),
+        hasAppUrl: Boolean(appUrl),
+      });
+
       return NextResponse.json(
-        { error: 'Service temporarily unavailable. Please verify database connection.' },
+        { error: 'Password reset service is temporarily unavailable.' },
         { status: 503 }
       );
     }
 
-    // Always return success response to prevent account enumeration
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    // Keep the response generic to protect account privacy.
     if (!user) {
+      console.log('[FORGOT PASSWORD] No matching user found.');
+
       return NextResponse.json({
         success: true,
-        message: 'If an account exists with this email, a reset token instructions link has been dispatched.',
+        message:
+          'If an account exists with this email, a reset link will be sent.',
       });
     }
 
-    // Generate secure random hex token
     const rawToken = crypto.randomBytes(32).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
+
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
     await prisma.passwordResetToken.create({
       data: {
@@ -59,18 +81,75 @@ export async function POST(request: Request) {
       },
     });
 
-    // In a development environment without SMTP keys configured, we log the reset link safely
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${rawToken}`;
-    console.log(`[AUTH] Password reset link for ${email}: ${resetUrl}`);
+    const baseUrl = (appUrl || 'http://localhost:3000').replace(/\/+$/, '');
+    const resetUrl = `${baseUrl}/reset-password?token=${rawToken}`;
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+
+    // In development mode, allow local testing without requiring Resend or a verified domain
+    if (isDevelopment) {
+      // If Resend is configured, we can attempt dispatch but do not fail if unverified/rejected
+      if (apiKey && fromEmail) {
+        try {
+          const resend = new Resend(apiKey);
+          await resend.emails.send({
+            from: fromEmail,
+            to: user.email,
+            subject: 'Reset your NOVA MARKET password (Development)',
+            text: `Reset your password using this link: ${resetUrl}`,
+          });
+        } catch (emailErr) {
+          console.log('[FORGOT PASSWORD - DEV] Resend dispatch bypassed/unverified domain:', emailErr);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'If an account exists with this email, a reset link will be sent.',
+        devToken: rawToken,
+        devResetLink: resetUrl,
+      });
+    }
+
+    // Production mode: Resend configuration is strictly required
+    if (!apiKey || !fromEmail) {
+      console.error('[FORGOT PASSWORD] Production missing Resend configuration:', {
+        hasApiKey: Boolean(apiKey),
+        hasFromEmail: Boolean(fromEmail),
+      });
+
+      return NextResponse.json(
+        { error: 'Password reset service is temporarily unavailable.' },
+        { status: 503 }
+      );
+    }
+
+    const resend = new Resend(apiKey);
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
+      to: user.email,
+      subject: 'Reset your NOVA MARKET password',
+      text: `Reset your password using this link: ${resetUrl}`,
+    });
+
+    if (error) {
+      console.error('[FORGOT PASSWORD] Resend delivery error:', error);
+      await prisma.passwordResetToken.deleteMany({
+        where: { tokenHash },
+      }).catch(() => {});
+
+      return NextResponse.json(
+        { error: 'Unable to send the reset email.' },
+        { status: 503 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'If an account exists with this email, a reset token instructions link has been dispatched.',
-      // In development mode only, expose helper link for seamless testing
-      devResetLink: process.env.NODE_ENV !== 'production' ? resetUrl : undefined,
+      message: 'If an account exists with this email, a reset link will be sent.',
     });
-  } catch (err: any) {
-    console.error('Forgot password error:', err);
+  } catch (err) {
+    console.error('[FORGOT PASSWORD] Unexpected error:', err);
+
     return NextResponse.json(
       { error: 'An unexpected internal error occurred.' },
       { status: 500 }

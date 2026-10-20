@@ -18,6 +18,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
   const { id } = await params;
 
   let order: any = null;
+  let dbFailure = false;
   try {
     order = await prisma.order.findUnique({
       where: { id },
@@ -27,8 +28,13 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
         inventoryLogs: true,
       },
     });
-  } catch {
-    // Database offline
+  } catch (err: any) {
+    console.error('[ADMIN ORDER DETAIL] Database query failed:', err.message);
+    dbFailure = true;
+  }
+
+  if (dbFailure) {
+    throw new Error('Database service is currently unreachable. Please verify database connectivity.');
   }
 
   if (!order) {

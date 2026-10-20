@@ -67,10 +67,9 @@ export default async function AdminDashboardPage() {
       _sum: { total: true },
     });
     totalRevenue = Number(revenueResult._sum.total || 0);
-  } catch {
-    // Database offline fallback values
-    productCount = 12;
-    orderCount = 0;
+  } catch (err: any) {
+    console.error('[ADMIN DASHBOARD] Database aggregation failed:', err.message);
+    throw new Error('Failed to load administrative analytics from database.');
   }
 
   return (

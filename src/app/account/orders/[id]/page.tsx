@@ -25,6 +25,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   }
 
   let order: any = null;
+  let dbFailure = false;
   try {
     order = await prisma.order.findUnique({
       where: { id },
@@ -33,8 +34,13 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         payments: true,
       },
     });
-  } catch {
-    // Database offline
+  } catch (err: any) {
+    console.error('[ORDER DETAIL] Database query failed:', err.message);
+    dbFailure = true;
+  }
+
+  if (dbFailure) {
+    throw new Error('Database service is currently unreachable. Please try again shortly.');
   }
 
   if (!order) {

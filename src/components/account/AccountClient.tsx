@@ -270,16 +270,48 @@ export function AccountClient({ user }: AccountClientProps) {
 
         {/* Right Column: Inquiries & Activity */}
         <div className="space-y-6">
-          {/* Order history placeholder notice */}
-          <div className="bg-zinc-50 p-6 rounded-2xl border border-zinc-200 text-xs text-zinc-600 space-y-2">
-            <div className="flex items-center gap-2 text-zinc-900 font-semibold text-sm">
-              <Package className="w-4 h-4" />
-              <span>Orders & Fulfillment</span>
+          {/* Order history and management */}
+          <div className="bg-zinc-50 p-6 rounded-2xl border border-zinc-200 text-xs text-zinc-600 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-zinc-900 font-semibold text-sm">
+                <Package className="w-4 h-4 text-zinc-700" />
+                <span>Orders & Purchases</span>
+              </div>
+              <a
+                href="/account/orders"
+                className="text-xs text-zinc-950 font-semibold underline hover:text-zinc-700"
+              >
+                View Orders →
+              </a>
             </div>
             <p className="leading-relaxed">
-              Order processing models are staged in PostgreSQL. Complete checkout transactions and live tracking will activate in Day 4.
+              Track your deliveries, review past purchase invoices, and check item fulfillment statuses.
             </p>
           </div>
+
+          {/* Admin Quick Access Panel if user has ADMIN role */}
+          {user.role === 'ADMIN' && (
+            <div className="bg-zinc-900 text-white p-6 rounded-2xl shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 font-semibold text-sm">
+                  <Shield className="w-4 h-4 text-emerald-400" />
+                  <span>Admin Operations Console</span>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 uppercase">
+                  Staff Access
+                </span>
+              </div>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                You are signed in with administrator privileges. Manage orders, inventory, catalog, and store analytics.
+              </p>
+              <a
+                href="/admin"
+                className="inline-flex items-center justify-center w-full px-4 py-2 text-xs font-semibold rounded-lg bg-white text-zinc-950 hover:bg-zinc-100 transition-colors"
+              >
+                Open Admin Dashboard
+              </a>
+            </div>
+          )}
 
           {/* Recent Inquiries List */}
           <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-xs space-y-4">

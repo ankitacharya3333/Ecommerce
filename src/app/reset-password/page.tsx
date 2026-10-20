@@ -23,23 +23,35 @@ function ResetPasswordForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      token,
+      token: token || '',
       password: '',
       confirmPassword: '',
     },
   });
 
+  // Synchronize token from searchParams if updated after initial client hydration
+  React.useEffect(() => {
+    if (token) {
+      setValue('token', token);
+    }
+  }, [token, setValue]);
+
   const onSubmit = async (data: ResetPasswordInput) => {
     setServerMessage(null);
+    const payload = {
+      ...data,
+      token: data.token || token,
+    };
     try {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -105,7 +117,7 @@ function ResetPasswordForm() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <input type="hidden" {...register('token')} value={token} />
+        <input type="hidden" {...register('token')} />
 
         <div>
           <label htmlFor="password" className="block text-xs font-semibold text-zinc-700 mb-1">

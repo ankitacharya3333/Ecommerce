@@ -46,23 +46,39 @@ export async function POST(request: Request) {
 
     const newPasswordHash = await hashPassword(password);
 
-    // Update password and invalidate reset token in a transaction
-    await prisma.$transaction([
-      prisma.user.update({
+    // Atomically update password and consume token; prevents race condition concurrent consumption
+    await prisma.$transaction(async (tx) => {
+      const updatedToken = await tx.passwordResetToken.updateMany({
+        where: {
+          id: resetRecord.id,
+          usedAt: null,
+        },
+        data: {
+          usedAt: new Date(),
+        },
+      });
+
+      if (updatedToken.count === 0) {
+        throw new Error('TOKEN_ALREADY_USED');
+      }
+
+      await tx.user.update({
         where: { id: resetRecord.userId },
         data: { passwordHash: newPasswordHash },
-      }),
-      prisma.passwordResetToken.update({
-        where: { id: resetRecord.id },
-        data: { usedAt: new Date() },
-      }),
-    ]);
+      });
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Your password has been successfully reset. You may now log in.',
     });
   } catch (err: any) {
+    if (err.message === 'TOKEN_ALREADY_USED') {
+      return NextResponse.json(
+        { error: 'Password reset link has already been used. Please request a new link.' },
+        { status: 400 }
+      );
+    }
     console.error('Reset password error:', err);
     return NextResponse.json(
       { error: 'An unexpected internal error occurred.' },

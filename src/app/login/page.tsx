@@ -42,23 +42,19 @@ export default function LoginPage() {
         return;
       }
 
+      const params = new URLSearchParams(window.location.search);
+      const callbackUrl = params.get('callbackUrl');
+
+      // Prevent open-redirect vulnerability: only allow relative URLs
+      const isSafeRedirect = callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//');
+
       if (json.user?.role === 'ADMIN') {
-        router.push('/admin');
+        router.push(isSafeRedirect ? callbackUrl : '/admin');
       } else {
-        router.push('/account');
+        router.push(isSafeRedirect && callbackUrl !== '/admin' ? callbackUrl : '/account');
       }
 
       router.refresh();
-
-
-      if (json.user?.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/account');
-      }
-
-      router.refresh();
-
     } catch {
       setServerError('Network error communicating with authentication service.');
     }

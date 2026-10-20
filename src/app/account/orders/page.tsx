@@ -20,6 +20,7 @@ export default async function CustomerOrdersPage() {
   }
 
   let orders: any[] = [];
+  let dbError: string | null = null;
   try {
     orders = await prisma.order.findMany({
       where: {
@@ -34,8 +35,9 @@ export default async function CustomerOrdersPage() {
       },
       orderBy: { createdAt: 'desc' },
     });
-  } catch (err) {
-    // Database offline
+  } catch (err: any) {
+    console.error('[ACCOUNT ORDERS] Database query failed:', err.message);
+    dbError = 'Unable to load orders from database. Please try again shortly.';
   }
 
   return (
@@ -65,7 +67,19 @@ export default async function CustomerOrdersPage() {
           </Link>
         </div>
 
-        {orders.length === 0 ? (
+        {dbError ? (
+          <div className="py-12 text-center max-w-md mx-auto bg-rose-50 rounded-2xl border border-rose-200 p-8 shadow-xs">
+            <h2 className="text-lg font-medium text-rose-900 mb-1">Database Unavailable</h2>
+            <p className="text-xs text-rose-600 mb-6 leading-relaxed">
+              {dbError}
+            </p>
+            <Link href="/account">
+              <Button variant="outline" size="md">
+                <span>Return to Account</span>
+              </Button>
+            </Link>
+          </div>
+        ) : orders.length === 0 ? (
           <div className="py-16 text-center max-w-md mx-auto bg-white rounded-2xl border border-zinc-200 p-8 shadow-xs">
             <div className="w-14 h-14 rounded-full bg-zinc-100 flex items-center justify-center mx-auto text-zinc-400 mb-4">
               <Package className="w-7 h-7" />

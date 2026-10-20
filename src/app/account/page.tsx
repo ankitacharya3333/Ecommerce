@@ -28,8 +28,8 @@ export default async function AccountPage() {
         },
       },
     });
-  } catch (err) {
-    // Database fallback in dev if DB is temporarily unreachable
+  } catch (err: any) {
+    console.error('[ACCOUNT PAGE] Database fetch failed:', err.message);
   }
 
   const userData = {

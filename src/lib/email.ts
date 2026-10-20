@@ -4,7 +4,10 @@ const resendApiKey = process.env.RESEND_API_KEY;
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'rmnrr333@gmail.com';
-export const EMAIL_FROM = process.env.EMAIL_FROM || 'NOVA MARKET <onboarding@resend.dev>';
+export const EMAIL_FROM =
+  process.env.RESEND_FROM_EMAIL ||
+  process.env.EMAIL_FROM ||
+  'NOVA MARKET <onboarding@resend.dev>';
 
 export interface SendEmailResult {
   success: boolean;

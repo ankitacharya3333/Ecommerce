@@ -2,7 +2,11 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 
-const SECRET_KEY = process.env.AUTH_SECRET || 'fallback-secret-development-only-minimum-32-chars-long';
+const authSecretEnv = process.env.AUTH_SECRET;
+if (process.env.NODE_ENV === 'production' && (!authSecretEnv || authSecretEnv.length < 32)) {
+  throw new Error('[SECURITY ERROR] AUTH_SECRET must be configured with at least 32 characters in production.');
+}
+const SECRET_KEY = authSecretEnv || 'fallback-secret-development-only-minimum-32-chars-long';
 const key = new TextEncoder().encode(SECRET_KEY);
 const COOKIE_NAME = 'nova_session_token';
 
